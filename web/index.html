@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoTrack 管理系统</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AutoTrack 设备管理系统</h1>
+            <nav>
+                <a href="#devices" class="nav-link active" data-tab="devices">设备列表</a>
+                <a href="#map" class="nav-link" data-tab="map">位置地图</a>
+                <a href="#scripts" class="nav-link" data-tab="scripts">脚本管理</a>
+                <a href="#logs" class="nav-link" data-tab="logs">执行日志</a>
+            </nav>
+        </header>
+
+        <main>
+            <!-- 设备列表 -->
+            <section id="devices" class="tab-content active">
+                <div class="section-header">
+                    <h2>设备列表</h2>
+                    <button class="btn btn-primary" onclick="refreshDevices()">刷新</button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>设备ID</th>
+                            <th>设备名称</th>
+                            <th>设备型号</th>
+                            <th>状态</th>
+                            <th>最后位置</th>
+                            <th>更新时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="devices-list">
+                        <tr>
+                            <td colspan="7" class="text-center">加载中...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- 位置地图 -->
+            <section id="map" class="tab-content">
+                <div class="section-header">
+                    <h2>设备位置</h2>
+                    <select id="device-select" onchange="showDeviceOnMap()">
+                        <option value="">选择设备</option>
+                    </select>
+                </div>
+                <div id="map-container" style="height: 600px;">
+                    <p class="text-center">地图加载中...</p>
+                    <!-- 这里可以集成百度地图、高德地图或其他地图服务 -->
+                </div>
+            </section>
+
+            <!-- 脚本管理 -->
+            <section id="scripts" class="tab-content">
+                <div class="section-header">
+                    <h2>脚本管理</h2>
+                    <button class="btn btn-primary" onclick="showAddScriptModal()">添加脚本</button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>脚本名称</th>
+                            <th>类型</th>
+                            <th>目标设备</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scripts-list">
+                        <tr>
+                            <td colspan="5" class="text-center">加载中...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- 执行日志 -->
+            <section id="logs" class="tab-content">
+                <div class="section-header">
+                    <h2>执行日志</h2>
+                    <button class="btn btn-primary" onclick="refreshLogs()">刷新</button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>脚本名称</th>
+                            <th>设备ID</th>
+                            <th>执行状态</th>
+                            <th>输出信息</th>
+                            <th>执行时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-list">
+                        <tr>
+                            <td colspan="5" class="text-center">加载中...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <!-- 添加脚本模态框 -->
+    <div id="add-script-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddScriptModal()">&times;</span>
+            <h2>添加脚本</h2>
+            <form id="add-script-form">
+                <div class="form-group">
+                    <label>脚本名称:</label>
+                    <input type="text" id="script-name" required>
+                </div>
+                <div class="form-group">
+                    <label>脚本类型:</label>
+                    <select id="script-type" required>
+                        <option value="javascript">JavaScript</option>
+                        <option value="autojs">Auto.js</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>目标设备:</label>
+                    <select id="script-device" required>
+                        <option value="">选择设备</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>脚本内容:</label>
+                    <textarea id="script-content" rows="10" required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAddScriptModal()">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
