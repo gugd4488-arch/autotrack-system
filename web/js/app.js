@@ -120,10 +120,13 @@ async function loadMapDevices() {
         const devices = await api.getDevices();
         const select = document.getElementById('device-select');
         
-        select.innerHTML = '<option value="">选择设备</option>' + 
+        select.innerHTML = '<option value="">全部设备</option>' + 
             devices.map(device => 
                 `<option value="${device.deviceId}">${device.name} (${device.deviceId})</option>`
             ).join('');
+        
+        // 显示所有设备在地图上
+        await showDevicesOnMap();
     } catch (error) {
         console.error('加载地图设备失败:', error);
     }
@@ -135,23 +138,11 @@ async function loadMapDevices() {
 async function showDeviceOnMap() {
     const deviceId = document.getElementById('device-select').value;
     if (!deviceId) {
-        return;
-    }
-
-    try {
-        const positions = await api.getDevicePositions(deviceId, 1);
-        if (positions.length > 0) {
-            const pos = positions[0];
-            document.getElementById('map-container').innerHTML = 
-                `<p class="text-center">设备位置: ${pos.latitude}, ${pos.longitude}<br>时间: ${formatDate(pos.timestamp)}</p>`;
-        } else {
-            document.getElementById('map-container').innerHTML = 
-                '<p class="text-center">该设备暂无位置数据</p>';
-        }
-    } catch (error) {
-        console.error('加载设备位置失败:', error);
-        document.getElementById('map-container').innerHTML = 
-            '<p class="text-center">加载位置失败</p>';
+        // 如果未选择设备，显示所有设备
+        await showDevicesOnMap();
+    } else {
+        // 显示指定设备的轨迹
+        await showTrajectory();
     }
 }
 

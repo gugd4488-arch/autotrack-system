@@ -79,7 +79,6 @@ class ScriptWorker(
 
     /**
      * 执行脚本
-     * 注意：这里需要集成Auto.js引擎
      */
     private fun executeScript(script: ScriptInfo) {
         val prefs = applicationContext.getSharedPreferences("autotrack", Context.MODE_PRIVATE)
@@ -91,17 +90,30 @@ class ScriptWorker(
         }
 
         try {
-            // TODO: 集成Auto.js引擎执行脚本
-            // 这里需要添加Auto.js相关依赖和代码
-            // val engine = ScriptEngineService.getInstance()
-            // val result = engine.execute(script.content)
+            // 使用Auto.js引擎执行脚本
+            val engine = AutoJsEngine.getInstance(applicationContext)
+            engine.init()
             
-            // 模拟执行结果
-            val success = true
-            val output = "Script executed successfully (placeholder)"
+            val result = when (script.type.lowercase()) {
+                "autojs" -> {
+                    // 执行Auto.js脚本
+                    engine.executeAutoJs(script.content, script.name)
+                }
+                "javascript", "js" -> {
+                    // 执行JavaScript脚本
+                    engine.execute(script.content, script.name)
+                }
+                else -> {
+                    // 默认作为JavaScript执行
+                    engine.execute(script.content, script.name)
+                }
+            }
+            
+            // 阻塞等待执行完成（如果需要）
+            Thread.sleep(1000)
             
             // 上报执行结果
-            reportScriptResult(script.id, success, output)
+            reportScriptResult(script.id, result.success, result.output)
         } catch (e: Exception) {
             e.printStackTrace()
             reportScriptResult(script.id, false, e.message ?: "Unknown error")
