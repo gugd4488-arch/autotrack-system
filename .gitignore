@@ -1,0 +1,32 @@
+# Build
+*.class
+*.jar
+*.war
+build/
+target/
+out/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Gradle
+.gradle/
+gradle-app.setting
+
+# Android
+*.apk
+local.properties
+captures/
+
+# Logs
+*.log
+
+# Database
+*.db
+*.sqlite
+
+# Config
+config.local.*

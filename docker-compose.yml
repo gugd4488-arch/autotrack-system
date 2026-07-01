@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: autotrack2026
+      MYSQL_DATABASE: autotrack
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  server:
+    build: ./server
+    ports:
+      - "8082:8082"
+      - "5055:5055"
+    depends_on:
+      - mysql
+    environment:
+      DB_HOST: mysql
+      DB_NAME: autotrack
+      DB_USER: root
+      DB_PASS: autotrack2026
+
+volumes:
+  mysql_data:
