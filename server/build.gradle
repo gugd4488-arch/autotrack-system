@@ -23,9 +23,6 @@ dependencies {
     implementation 'mysql:mysql-connector-java:8.0.33'
     implementation 'com.h2database:h2'
     
-    // Traccar Core
-    implementation 'org.traccar:traccar-web:5.0'
-    
     // Utilities
     implementation 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

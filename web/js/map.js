@@ -1,9 +1,9 @@
 /**
- * 地图管理模块
- * 支持百度地图、Google Maps等
+ * 地图管理模块 - 谷歌地图版本
+ * 支持Google Maps显示设备位置和轨迹
  */
 
-let baiduMap = null;
+let googleMap = null;
 let mapMarkers = [];
 let mapPolylines = [];
 
@@ -12,18 +12,19 @@ let mapPolylines = [];
  */
 function initMap() {
     try {
-        // 尝试初始化百度地图
-        if (window.BMapGL) {
-            const container = document.getElementById('baidu-map');
-            baiduMap = new BMapGL.Map(container);
+        // 尝试初始化谷歌地图
+        if (window.google && window.google.maps) {
+            const container = document.getElementById('google-map');
             
-            // 设置默认中心点和缩放级别
-            baiduMap.centerAndZoom(new BMapGL.Point(116.404, 39.915), 12);
-            baiduMap.enableScrollWheelZoom(true);
+            googleMap = new google.maps.Map(container, {
+                center: { lat: 39.915, lng: 116.404 }, // 北京
+                zoom: 12,
+                mapTypeId: 'roadmap'
+            });
             
-            console.log('Baidu Map initialized');
+            console.log('Google Maps initialized');
         } else {
-            console.warn('Baidu Map API not loaded');
+            console.warn('Google Maps API not loaded');
             initSimpleMap();
         }
     } catch (error) {
@@ -33,19 +34,19 @@ function initMap() {
 }
 
 /**
- * 初始化简单地图（HTML Canvas）
+ * 初始化简单地图（文字版）
  */
 function initSimpleMap() {
-    const container = document.getElementById('baidu-map');
+    const container = document.getElementById('google-map');
     container.innerHTML = `
         <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
             <div style="text-align: center; color: white;">
                 <h3>地图服务</h3>
-                <p style="margin-top: 20px;">配置百度地图API Key以启用实时地图</p>
+                <p style="margin-top: 20px;">配置Google Maps API Key以启用实时地图</p>
                 <p style="font-size: 12px; margin-top: 10px;">
-                    修改 js/config.js 中的 BAIDU_MAP_KEY
+                    修改 index.html 中的 YOUR_GOOGLE_MAPS_KEY
                 </p>
-                <div id="text-map" style="margin-top: 30px; text-align: left; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 8px;">
+                <div id="text-map" style="margin-top: 30px; text-align: left; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 8px; max-height: 400px; overflow-y: auto;">
                     <!-- 文字形式显示设备位置 -->
                 </div>
             </div>
@@ -86,8 +87,8 @@ async function showDevicesOnMap() {
             }
         }
 
-        if (baiduMap) {
-            displayOnBaiduMap(deviceLocations);
+        if (googleMap) {
+            displayOnGoogleMap(deviceLocations);
         } else {
             displayOnTextMap(deviceLocations);
         }
@@ -100,54 +101,64 @@ async function showDevicesOnMap() {
 }
 
 /**
- * 在百度地图上显示设备
+ * 在谷歌地图上显示设备
  */
-function displayOnBaiduMap(deviceLocations) {
+function displayOnGoogleMap(deviceLocations) {
     clearMapMarkers();
     
+    const bounds = new google.maps.LatLngBounds();
+    
     deviceLocations.forEach((device, index) => {
-        const point = new BMapGL.Point(device.longitude, device.latitude);
+        const position = { lat: device.latitude, lng: device.longitude };
         
-        // 根据状态选择图标颜色
-        const iconUrl = device.status === 'online' 
-            ? 'http://api.map.baidu.com/library/GeoUtils/1.2/src/images/icon_end.png'
-            : 'http://api.map.baidu.com/library/GeoUtils/1.2/src/images/icon_start.png';
-        
-        const marker = new BMapGL.Marker(point, {
+        // 创建标记
+        const marker = new google.maps.Marker({
+            position: position,
+            map: googleMap,
             title: device.name,
-            icon: new BMapGL.Icon(iconUrl, new BMapGL.Size(20, 25))
+            label: {
+                text: (index + 1).toString(),
+                color: 'white'
+            },
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 12,
+                fillColor: device.status === 'online' ? '#4CAF50' : '#f44336',
+                fillOpacity: 1,
+                strokeColor: 'white',
+                strokeWeight: 2
+            }
         });
         
-        baiduMap.addOverlay(marker);
-        mapMarkers.push(marker);
-
-        // 添加信息窗口
-        const infoWindow = new BMapGL.InfoWindow(
-            `<div style="font-size: 12px; padding: 10px;">
-                <strong>${device.name}</strong><br>
-                设备ID: ${device.deviceId}<br>
-                状态: <span style="color: ${device.status === 'online' ? 'green' : 'red'}">${device.status}</span><br>
-                位置: ${device.latitude.toFixed(4)}, ${device.longitude.toFixed(4)}<br>
-                更新时间: ${new Date(device.timestamp).toLocaleString('zh-CN')}
-            </div>`
-        );
-
-        marker.addEventListener('click', function() {
-            baiduMap.openInfoWindow(infoWindow, point);
+        // 创建信息窗口
+        const infoWindow = new google.maps.InfoWindow({
+            content: `
+                <div style="font-size: 12px; padding: 10px; min-width: 200px;">
+                    <strong style="font-size: 14px;">${device.name}</strong><br><br>
+                    <b>设备ID:</b> ${device.deviceId}<br>
+                    <b>状态:</b> <span style="color: ${device.status === 'online' ? 'green' : 'red'}">${device.status}</span><br>
+                    <b>位置:</b> ${device.latitude.toFixed(6)}, ${device.longitude.toFixed(6)}<br>
+                    <b>更新时间:</b> ${new Date(device.timestamp).toLocaleString('zh-CN')}
+                </div>
+            `
         });
+        
+        marker.addListener('click', () => {
+            infoWindow.open(googleMap, marker);
+        });
+        
+        mapMarkers.push(marker);
+        bounds.extend(position);
     });
 
-    // 自动调整地图视图以显示所有标记
+    // 自动调整视图以显示所有标记
     if (deviceLocations.length > 0) {
-        const points = deviceLocations.map(d => new BMapGL.Point(d.longitude, d.latitude));
-        const bounds = new BMapGL.Bounds();
-        points.forEach(p => bounds.extend(p));
-        baiduMap.fitBounds(bounds);
+        googleMap.fitBounds(bounds);
     }
 }
 
 /**
- * 在文字地图上显示设备（当百度地图不可用时）
+ * 在文字地图上显示设备（当谷歌地图不可用时）
  */
 function displayOnTextMap(deviceLocations) {
     const textMapContainer = document.getElementById('text-map');
@@ -157,9 +168,10 @@ function displayOnTextMap(deviceLocations) {
             <div style="margin-bottom: 15px; padding: 10px; background: rgba(255,255,255,0.2); border-radius: 4px;">
                 <strong style="font-size: 14px;">${index + 1}. ${device.name}</strong><br>
                 <span style="font-size: 12px;">
-                    📍 ${device.latitude.toFixed(4)}, ${device.longitude.toFixed(4)}<br>
+                    📍 ${device.latitude.toFixed(6)}, ${device.longitude.toFixed(6)}<br>
                     ✓ 状态: <span style="color: ${device.status === 'online' ? '#4CAF50' : '#f44336'}">${device.status}</span><br>
-                    🕒 更新: ${formatDate(device.timestamp)}
+                    🕒 更新: ${formatDate(device.timestamp)}<br>
+                    🌐 <a href="https://www.google.com/maps?q=${device.latitude},${device.longitude}" target="_blank" style="color: #90CAF9;">在Google Maps中打开</a>
                 </span>
             </div>
         `).join('');
@@ -186,58 +198,72 @@ async function showTrajectory() {
             return;
         }
 
-        if (baiduMap) {
-            displayTrajectoryOnBaiduMap(positions);
+        if (googleMap) {
+            displayTrajectoryOnGoogleMap(positions);
+        } else {
+            alert('请配置Google Maps API以显示轨迹');
         }
     } catch (error) {
         console.error('Failed to show trajectory:', error);
-        alert('加载轨迹失败');
+        alert('加载轨迹失败: ' + error.message);
     }
 }
 
 /**
- * 在百度地图上显示轨迹
+ * 在谷歌地图上显示轨迹
  */
-function displayTrajectoryOnBaiduMap(positions) {
+function displayTrajectoryOnGoogleMap(positions) {
     // 绘制轨迹线
-    const path = positions.map(p => new BMapGL.Point(p.longitude, p.latitude));
+    const path = positions.map(p => ({ lat: p.latitude, lng: p.longitude }));
     
-    const polyline = new BMapGL.Polyline(path, {
-        strokeColor: 'blue',
-        strokeWeight: 3,
-        strokeOpacity: 0.8
+    const polyline = new google.maps.Polyline({
+        path: path,
+        geodesic: true,
+        strokeColor: '#2196F3',
+        strokeOpacity: 0.8,
+        strokeWeight: 3
     });
     
-    baiduMap.addOverlay(polyline);
+    polyline.setMap(googleMap);
     mapPolylines.push(polyline);
 
     // 标记起点
     if (positions.length > 0) {
-        const startPoint = new BMapGL.Point(
-            positions[0].longitude,
-            positions[0].latitude
-        );
-        const startMarker = new BMapGL.Marker(startPoint, {
-            title: '起点'
+        const startMarker = new google.maps.Marker({
+            position: { lat: positions[0].latitude, lng: positions[0].longitude },
+            map: googleMap,
+            label: '起',
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                fillColor: '#4CAF50',
+                fillOpacity: 1,
+                strokeColor: 'white',
+                strokeWeight: 2
+            }
         });
-        baiduMap.addOverlay(startMarker);
         mapMarkers.push(startMarker);
 
         // 标记终点
-        const endPoint = new BMapGL.Point(
-            positions[positions.length - 1].longitude,
-            positions[positions.length - 1].latitude
-        );
-        const endMarker = new BMapGL.Marker(endPoint, {
-            title: '终点'
+        const endMarker = new google.maps.Marker({
+            position: { lat: positions[positions.length - 1].latitude, lng: positions[positions.length - 1].longitude },
+            map: googleMap,
+            label: '终',
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                fillColor: '#f44336',
+                fillOpacity: 1,
+                strokeColor: 'white',
+                strokeWeight: 2
+            }
         });
-        baiduMap.addOverlay(endMarker);
         mapMarkers.push(endMarker);
 
         // 自动调整视图
-        const bounds = new BMapGL.Bounds();
+        const bounds = new google.maps.LatLngBounds();
         path.forEach(p => bounds.extend(p));
-        baiduMap.fitBounds(bounds);
+        googleMap.fitBounds(bounds);
     }
 }
 
@@ -262,7 +288,11 @@ function updateMapDevicesList(deviceLocations) {
     tbody.innerHTML = deviceLocations.map(device => `
         <tr>
             <td>${device.name}</td>
-            <td>${device.latitude.toFixed(4)}, ${device.longitude.toFixed(4)}</td>
+            <td>
+                <a href="https://www.google.com/maps?q=${device.latitude},${device.longitude}" target="_blank">
+                    ${device.latitude.toFixed(6)}, ${device.longitude.toFixed(6)}
+                </a>
+            </td>
             <td>-</td>
             <td>${formatDate(device.timestamp)}</td>
             <td>
@@ -281,14 +311,47 @@ async function showDeviceTrajectory(deviceId) {
 }
 
 /**
+ * 显示单个设备在地图上
+ */
+async function showDeviceOnMap() {
+    const deviceId = document.getElementById('device-select').value;
+    
+    if (!deviceId) {
+        // 显示所有设备
+        await showDevicesOnMap();
+    } else {
+        // 显示单个设备
+        try {
+            clearMapMarkers();
+            const positions = await api.getDevicePositions(deviceId, 1);
+            
+            if (positions.length > 0 && googleMap) {
+                const pos = positions[0];
+                const position = { lat: pos.latitude, lng: pos.longitude };
+                
+                const marker = new google.maps.Marker({
+                    position: position,
+                    map: googleMap,
+                    animation: google.maps.Animation.DROP
+                });
+                
+                mapMarkers.push(marker);
+                googleMap.setCenter(position);
+                googleMap.setZoom(15);
+            }
+        } catch (error) {
+            console.error('Failed to show device:', error);
+        }
+    }
+}
+
+/**
  * 清除地图上的所有标记
  */
 function clearMapMarkers() {
-    if (baiduMap) {
-        mapMarkers.forEach(marker => {
-            baiduMap.removeOverlay(marker);
-        });
-    }
+    mapMarkers.forEach(marker => {
+        marker.setMap(null);
+    });
     mapMarkers = [];
 }
 
@@ -296,12 +359,25 @@ function clearMapMarkers() {
  * 清除地图上的所有折线
  */
 function clearMapPolylines() {
-    if (baiduMap) {
-        mapPolylines.forEach(polyline => {
-            baiduMap.removeOverlay(polyline);
-        });
-    }
+    mapPolylines.forEach(polyline => {
+        polyline.setMap(null);
+    });
     mapPolylines = [];
+}
+
+/**
+ * 格式化日期
+ */
+function formatDate(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
 }
 
 /**
