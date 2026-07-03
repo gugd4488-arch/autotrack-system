@@ -26,13 +26,21 @@ public class PositionController {
         position.setServerTime(LocalDateTime.now());
         Position saved = positionRepository.save(position);
         
+        // 如果设备不存在，自动创建
+        Device device = deviceRepository.findByDeviceId(position.getDeviceId())
+            .orElseGet(() -> {
+                Device newDevice = new Device();
+                newDevice.setDeviceId(position.getDeviceId());
+                newDevice.setName("Device_" + position.getDeviceId().substring(0, Math.min(8, position.getDeviceId().length())));
+                newDevice.setActive(true);
+                return deviceRepository.save(newDevice);
+            });
+        
         // Update device last position
-        deviceRepository.findByDeviceId(position.getDeviceId()).ifPresent(device -> {
-            device.setLastLatitude(position.getLatitude());
-            device.setLastLongitude(position.getLongitude());
-            device.setLastUpdate(LocalDateTime.now());
-            deviceRepository.save(device);
-        });
+        device.setLastLatitude(position.getLatitude());
+        device.setLastLongitude(position.getLongitude());
+        device.setLastUpdate(LocalDateTime.now());
+        deviceRepository.save(device);
         
         return ResponseEntity.ok(saved);
     }

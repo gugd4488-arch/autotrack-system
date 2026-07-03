@@ -17,7 +17,8 @@ public class DeviceController {
     
     @GetMapping
     public List<Device> getAllDevices() {
-        return deviceRepository.findAll();
+        // 只返回激活的设备，确保用户界面只显示有效设备
+        return deviceRepository.findByActiveTrue();
     }
     
     @GetMapping("/{deviceId}")

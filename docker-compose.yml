@@ -23,6 +23,13 @@ services:
       DB_NAME: autotrack
       DB_USER: root
       DB_PASS: autotrack2026
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+      JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8"
+      SERVER_SERVLET_ENCODING_CHARSET: UTF-8
+      SERVER_SERVLET_ENCODING_FORCE: "true"
+      SERVER_SERVLET_ENCODING_FORCE_REQUEST: "true"
+      SERVER_SERVLET_ENCODING_FORCE_RESPONSE: "true"
 
 volumes:
   mysql_data:

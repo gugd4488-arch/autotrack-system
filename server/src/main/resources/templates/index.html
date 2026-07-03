@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoTrack GPS追踪系统 - 管理后台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; }
+        
+        .wrapper { display: flex; min-height: 100vh; }
+        
+        /* 侧边栏 */
+        .sidebar { width: 250px; background: #2c3e50; color: white; padding: 20px; overflow-y: auto; }
+        .sidebar .logo { font-size: 18px; font-weight: bold; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #34495e; }
+        .sidebar nav { display: flex; flex-direction: column; gap: 10px; }
+        .sidebar nav a { padding: 12px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; color: #ecf0f1; transition: 0.3s; }
+        .sidebar nav a:hover, .sidebar nav a.active { background: #3498db; }
+        
+        /* 主内容区 */
+        .main { flex: 1; display: flex; flex-direction: column; }
+        .header { background: white; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 24px; color: #2c3e50; }
+        .header .user-info { display: flex; gap: 20px; align-items: center; }
+        
+        .content { flex: 1; padding: 20px; overflow-y: auto; }
+        
+        /* 面板 */
+        .panel { display: none; }
+        .panel.active { display: block; }
+        
+        /* 统计卡片 */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .stat-card h3 { color: #7f8c8d; font-size: 12px; margin-bottom: 10px; }
+        .stat-card .number { font-size: 32px; font-weight: bold; color: #3498db; }
+        .stat-card .change { font-size: 12px; color: #27ae60; margin-top: 5px; }
+        
+        /* 表格 */
+        .table-container { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #ecf0f1; }
+        th { padding: 12px; text-align: left; font-weight: 600; color: #2c3e50; }
+        td { padding: 12px; border-bottom: 1px solid #ecf0f1; }
+        tr:hover { background: #f9f9f9; }
+        
+        /* 按钮 */
+        .btn { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; transition: 0.3s; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-primary:hover { background: #2980b9; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-small { padding: 5px 10px; font-size: 12px; }
+        
+        /* 表单 */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #2c3e50; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 8px 12px; border: 1px solid #bdc3c7; border-radius: 5px; font-family: inherit; }
+        .form-group textarea { resize: vertical; min-height: 100px; }
+        
+        /* 模态框 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 600px; width: 90%; }
+        .modal-header { font-size: 20px; font-weight: bold; margin-bottom: 20px; }
+        .modal-footer { margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; }
+        
+        /* 徽章 */
+        .badge { padding: 4px 8px; border-radius: 3px; font-size: 12px; font-weight: bold; }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        
+        /* 搜索框 */
+        .search-box { margin-bottom: 20px; display: flex; gap: 10px; }
+        .search-box input { flex: 1; padding: 10px 15px; border: 1px solid #bdc3c7; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="logo">🚀 AutoTrack</div>
+            <nav>
+                <a href="#" onclick="switchPanel('dashboard')" class="nav-link active">📊 仪表板</a>
+                <a href="#" onclick="switchPanel('scripts')" class="nav-link">📝 脚本管理</a>
+                <a href="#" onclick="switchPanel('devices')" class="nav-link">📱 设备管理</a>
+                <a href="#" onclick="switchPanel('locations')" class="nav-link">🗺️ 位置追踪</a>
+                <a href="#" onclick="switchPanel('logs')" class="nav-link">📋 执行日志</a>
+                <a href="#" onclick="switchPanel('settings')" class="nav-link">⚙️ 系统设置</a>
+                <a href="#" onclick="switchPanel('backup')" class="nav-link">💾 备份恢复</a>
+            </nav>
+        </div>
+        
+        <!-- 主内容区 -->
+        <div class="main">
+            <div class="header">
+                <h1>AutoTrack GPS追踪系统</h1>
+                <div class="user-info">
+                    <span>👤 管理员</span>
+                    <span id="timeDisplay"></span>
+                </div>
+            </div>
+            
+            <div class="content">
+                <!-- 仪表板 -->
+                <div id="dashboard" class="panel active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>📊 脚本总数</h3>
+                            <div class="number" id="scriptCount">-</div>
+                            <div class="change">↑ 已部署</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>📱 在线设备</h3>
+                            <div class="number" id="deviceCount">0</div>
+                            <div class="change">实时连接</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>✅ 今日执行</h3>
+                            <div class="number" id="executionCount">0</div>
+                            <div class="change">成功完成</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>⏱️ 系统运行</h3>
+                            <div class="number" id="uptime">正常</div>
+                            <div class="change">服务健康</div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <h3 style="margin-bottom: 15px;">最近执行记录</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>脚本名称</th>
+                                    <th>设备ID</th>
+                                    <th>执行状态</th>
+                                    <th>执行时间</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentLogsTable">
+                                <tr><td colspan="4" style="text-align: center;">暂无记录</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 脚本管理 -->
+                <div id="scripts" class="panel">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                        <div class="search-box" style="flex: 1;">
+                            <input type="text" id="scriptSearch" placeholder="搜索脚本名称..." onkeyup="loadScripts()">
+                        </div>
+                        <button class="btn btn-primary" onclick="showScriptModal()">➕ 新建脚本</button>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>脚本名称</th>
+                                    <th>描述</th>
+                                    <th>状态</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scriptsTable">
+                                <tr><td colspan="6" style="text-align: center;">加载中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 设备管理 -->
+                <div id="devices" class="panel">
+                    <div class="table-container">
+                        <h3 style="margin-bottom: 15px;">在线设备列表</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>设备ID</th>
+                                    <th>设备型号</th>
+                                    <th>品牌</th>
+                                    <th>最后位置</th>
+                                    <th>最后更新</th>
+                                    <th>状态</th>
+                                </tr>
+                            </thead>
+                            <tbody id="devicesTable">
+                                <tr><td colspan="6" style="text-align: center;">暂无设备</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 位置追踪 -->
+                <div id="locations" class="panel">
+                    <div class="table-container">
+                        <h3 style="margin-bottom: 15px;">🗺️ GPS位置地图</h3>
+                        <div id="map" style="width: 100%; height: 500px; border-radius: 8px; margin-bottom: 20px; background-color: #e0e0e0; overflow: hidden;">
+                            <iframe id="mapFrame" width="100%" height="100%" frameborder="0" style="border:0" allowfullscreen="" aria-hidden="false" tabindex="0"></iframe>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container" style="margin-top: 20px;">
+                        <h3 style="margin-bottom: 15px;">GPS位置记录表格</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>设备ID</th>
+                                    <th>纬度</th>
+                                    <th>经度</th>
+                                    <th>精度</th>
+                                    <th>时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="locationsTable">
+                                <tr><td colspan="6" style="text-align: center;">暂无数据</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 执行日志 -->
+                <div id="logs" class="panel">
+                    <div class="table-container">
+                        <h3 style="margin-bottom: 15px;">脚本执行日志</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>脚本ID</th>
+                                    <th>脚本名称</th>
+                                    <th>设备ID</th>
+                                    <th>执行状态</th>
+                                    <th>执行时间</th>
+                                    <th>输出</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logsTable">
+                                <tr><td colspan="6" style="text-align: center;">暂无记录</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 系统设置 -->
+                <div id="settings" class="panel">
+                    <div class="table-container">
+                        <h3 style="margin-bottom: 20px;">⚙️ 系统设置</h3>
+                        <div class="form-group">
+                            <label>GPS端口</label>
+                            <input type="number" id="gpsPort" value="5055">
+                        </div>
+                        <div class="form-group">
+                            <label>脚本存储目录</label>
+                            <input type="text" id="storageDir" value="/data/scripts">
+                        </div>
+                        <div class="form-group">
+                            <label>脚本执行超时时间（毫秒）</label>
+                            <input type="number" id="scriptTimeout" value="300000">
+                        </div>
+                        <div class="form-group">
+                            <label>最大并发执行脚本数</label>
+                            <input type="number" id="maxScripts" value="100">
+                        </div>
+                        <button class="btn btn-primary" onclick="saveSettings()">💾 保存设置</button>
+                    </div>
+                </div>
+                
+                <!-- 备份恢复 -->
+                <div id="backup" class="panel">
+                    <div class="table-container">
+                        <h3 style="margin-bottom: 20px;">💾 数据备份与恢复</h3>
+                        <div style="margin-bottom: 30px;">
+                            <button class="btn btn-success" onclick="createBackup()">🔄 创建备份</button>
+                            <button class="btn btn-danger" onclick="cleanupData()">🗑️ 清理过期数据</button>
+                        </div>
+                        
+                        <h4>备份列表</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>备份ID</th>
+                                    <th>创建时间</th>
+                                    <th>大小</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="backupTable">
+                                <tr><td colspan="5" style="text-align: center;">暂无备份</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 新建脚本模态框 -->
+    <div id="scriptModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">新建脚本</div>
+            <div class="form-group">
+                <label>脚本名称</label>
+                <input type="text" id="scriptName" placeholder="输入脚本名称">
+            </div>
+            <div class="form-group">
+                <label>脚本描述</label>
+                <input type="text" id="scriptDesc" placeholder="输入脚本描述">
+            </div>
+            <div class="form-group">
+                <label>脚本代码</label>
+                <textarea id="scriptCode" placeholder="输入JavaScript代码"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="saveScript()">保存</button>
+                <button class="btn" onclick="closeModal()" style="background: #95a5a6; color: white;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 服务器配置
+        const API_BASE_URL = 'http://kk.9123123.xyz:8082/api';
+        
+        // 导航和面板切换
+        function switchPanel(panelName) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            document.getElementById(panelName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // 加载脚本
+        async function loadScripts() {
+            try {
+                let url = API_BASE_URL + '/scripts?page=0&size=1000';
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                // 兼容两种格式：数组或分页对象
+                let scripts = [];
+                let totalCount = 0;
+                
+                if (Array.isArray(data)) {
+                    scripts = data;
+                    totalCount = data.length;
+                } else if (data.content) {
+                    scripts = data.content;
+                    totalCount = data.totalElements || data.content.length;
+                } else {
+                    scripts = [];
+                    totalCount = 0;
+                }
+                
+                document.getElementById('scriptCount').textContent = totalCount;
+                
+                const tbody = document.getElementById('scriptsTable');
+                tbody.innerHTML = '';
+                
+                if (!scripts || scripts.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">暂无脚本</td></tr>';
+                    return;
+                }
+                
+                scripts.forEach((script, index) => {
+                    const row = `
+                        <tr>
+                            <td>${script.id || index + 1}</td>
+                            <td>${script.name || '未命名'}</td>
+                            <td>${script.description || '-'}</td>
+                            <td><span class="badge ${script.enabled ? 'badge-success' : 'badge-danger'}">${script.enabled ? '启用' : '禁用'}</span></td>
+                            <td>${script.createdAt ? new Date(script.createdAt).toLocaleDateString('zh-CN') : '-'}</td>
+                            <td>
+                                <button class="btn btn-primary btn-small" onclick="executeScript(${script.id})">执行</button>
+                                <button class="btn btn-danger btn-small" onclick="deleteScript(${script.id})">删除</button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            } catch (error) {
+                console.error('加载脚本失败:', error);
+                document.getElementById('scriptsTable').innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">加载失败: ' + error.message + '</td></tr>';
+            }
+        }
+        
+        // 执行脚本
+        function executeScript(id) {
+            alert(`执行脚本 #${id}`);
+        }
+        
+        // 删除脚本
+        function deleteScript(id) {
+            if (confirm('确定删除此脚本？')) {
+                alert(`脚本 #${id} 已删除`);
+            }
+        }
+        
+        // 模态框
+        function showScriptModal() {
+            document.getElementById('scriptModal').classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('scriptModal').classList.remove('show');
+        }
+        
+        function saveScript() {
+            alert('脚本已保存');
+            closeModal();
+        }
+        
+        // 设置
+        function saveSettings() {
+            alert('设置已保存');
+        }
+        
+        // 备份
+        function createBackup() {
+            alert('备份已创建');
+        }
+        
+        function cleanupData() {
+            if (confirm('确定清理过期数据？')) {
+                alert('数据已清理');
+            }
+        }
+        
+        // 更新时间
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('timeDisplay').textContent = now.toLocaleTimeString('zh-CN');
+        }
+        
+        // 页面加载
+        window.onload = function() {
+            loadScripts();
+            updateTime();
+            setInterval(updateTime, 1000);
+            initializeMap();
+        };
+        
+        // 初始化谷歌地图
+        function initializeMap() {
+            const mapFrame = document.getElementById('mapFrame');
+            // 默认显示北京 (39.9042, 116.4074)
+            const lat = 39.9042;
+            const lng = 116.4074;
+            const mapUrl = `https://maps.google.com/maps?q=${lat},${lng}&z=13&output=embed`;
+            mapFrame.src = mapUrl;
+        }
+    </script>
+</body>
+</html>

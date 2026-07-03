@@ -24,8 +24,18 @@ public class Device {
     
     private Double lastLatitude;
     private Double lastLongitude;
+    
+    @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
     private LocalDateTime lastUpdate;
     
     private Boolean active = true;
+    
+    @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt = LocalDateTime.now();
+    
+    @PreUpdate
+    protected void onUpdate() {
+        this.lastUpdate = LocalDateTime.now();
+    }
 }
+
